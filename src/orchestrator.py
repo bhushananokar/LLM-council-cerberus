@@ -38,6 +38,20 @@ from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# MongoDB repository - will be set by API
+_council_repository = None
+
+
+def set_council_repository(repository):
+    """Set the MongoDB repository for storing council decisions."""
+    global _council_repository
+    _council_repository = repository
+
+
+def get_council_repository():
+    """Get the MongoDB repository."""
+    return _council_repository
+
 
 class CouncilOrchestrator:
     """Main orchestrator for the LLM Council."""
@@ -258,6 +272,15 @@ Focus on what the code actually does when executed."""
         if not skip_cache:
             self._cache_decision(package_data, decision)
         
+        # Save to MongoDB if repository is configured
+        if _council_repository:
+            try:
+                await self._save_to_mongodb(decision)
+                logger.info(f"Saved analysis to MongoDB: {decision.decision_id}")
+            except Exception as e:
+                logger.error(f"Failed to save to MongoDB: {str(e)}")
+                # Don't fail the analysis if MongoDB save fails
+        
         # Update statistics
         self._update_stats(decision)
         
@@ -368,6 +391,28 @@ Focus on what the code actually does when executed."""
             logger.debug(f"Cached decision for {package_data.package_name}")
         except Exception as e:
             logger.warning(f"Cache storage failed: {str(e)}")
+    
+    async def _save_to_mongodb(self, decision: CouncilDecision):
+        """
+        Save council decision to MongoDB.
+        
+        Args:
+            decision: CouncilDecision to save
+        """
+        if not _council_repository:
+            return
+        
+        # Convert decision to dict suitable for MongoDB
+        decision_dict = decision.dict()
+        
+        # Convert agent responses to serializable format
+        decision_dict["agent_responses"] = [
+            resp.dict() if hasattr(resp, 'dict') else resp 
+            for resp in decision_dict.get("agent_responses", [])
+        ]
+        
+        # Save to database
+        await _council_repository.save_council_analysis(decision_dict)
     
     def _update_stats(self, decision: CouncilDecision):
         """

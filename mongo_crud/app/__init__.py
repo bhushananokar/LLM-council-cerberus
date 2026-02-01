@@ -1,0 +1,3 @@
+"""
+FastAPI MongoDB CRUD Application
+"""

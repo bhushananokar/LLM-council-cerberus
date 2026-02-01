@@ -11,6 +11,7 @@ Endpoints:
 """
 
 import logging
+import os
 import time
 from typing import Optional
 from contextlib import asynccontextmanager
@@ -27,13 +28,30 @@ from src.models import (
     AnalysisResponse,
     HealthCheckResponse
 )
-from src.orchestrator import get_orchestrator, analyze_package, health_check as system_health_check
+from src.orchestrator import (
+    get_orchestrator, 
+    analyze_package, 
+    health_check as system_health_check,
+    set_council_repository
+)
+from src.debate_orchestrator import set_debate_repository
 from src.utils import setup_logging, print_decision_summary
 from config.settings import settings
+
+# Import MongoDB components from mongo_crud
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'mongo_crud'))
+from app.database.mongodb import MongoDB
+from app.database.council_repository import CouncilRepository
+from app.routers.council import router as council_router
 
 # Setup logging
 setup_logging(settings.LOG_LEVEL, settings.LOG_FILE)
 logger = logging.getLogger(__name__)
+
+# Global MongoDB instance
+mongodb = MongoDB()
+council_repo = None
 
 
 # ============================================================================
@@ -48,9 +66,30 @@ async def lifespan(app: FastAPI):
     Args:
         app: FastAPI application
     """
+    global council_repo
+    
     # Startup
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+    
+    # Initialize MongoDB if configured
+    mongodb_uri = os.getenv("MONGODB_URI")
+    if mongodb_uri:
+        try:
+            logger.info("Connecting to MongoDB...")
+            await mongodb.connect()
+            council_repo = CouncilRepository(mongodb.db)
+            
+            # Set repository in orchestrators
+            set_council_repository(council_repo)
+            set_debate_repository(council_repo)
+            
+            logger.info("MongoDB connected and repositories configured")
+        except Exception as e:
+            logger.error(f"MongoDB connection failed: {str(e)}")
+            logger.warning("Continuing without MongoDB storage")
+    else:
+        logger.info("MONGODB_URI not configured - running without MongoDB storage")
     
     # Initialize orchestrator
     orchestrator = get_orchestrator()
@@ -71,6 +110,12 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down API server...")
+    
+    # Disconnect MongoDB
+    if mongodb.client:
+        await mongodb.disconnect()
+        logger.info("MongoDB disconnected")
+    
     logger.info("Cleanup complete")
 
 
@@ -84,6 +129,9 @@ app = FastAPI(
     version=settings.APP_VERSION,
     lifespan=lifespan
 )
+
+# Include council router for MongoDB analytics
+app.include_router(council_router, prefix="/api/v1")
 
 # ============================================================================
 # MIDDLEWARE

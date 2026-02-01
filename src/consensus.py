@@ -107,7 +107,11 @@ class DebateHandler:
         response_map = {r.agent_name: r for r in responses}
         
         # Track current votes throughout debate
-        current_votes = {r.agent_name: r.verdict[0].upper() for r in responses}  # M, B, or U
+        # Safely handle None/empty verdicts
+        current_votes = {
+            r.agent_name: r.verdict[0].upper() if r.verdict else "U" 
+            for r in responses
+        }  # M, B, or U
         current_scores = {r.agent_name: r.risk_score for r in responses}
         
         debate_transcript = []
@@ -125,7 +129,7 @@ Description: {package_data.description}"""
             debate_transcript.append({
                 "round": round_num,
                 "speaker": response.agent_name,
-                "vote": response.verdict[0].upper(),
+                "vote": response.verdict[0].upper() if response.verdict else "U",
                 "reason": f"Initial assessment: {response.explanation}",
                 "risk_score": response.risk_score
             })
@@ -219,7 +223,7 @@ REASON: <1-2 sentences explaining your current position>"""
                         "risk_score": new_score
                     })
                     
-                    logger.info(f"Round {round_num} - {speaker_name}: {new_vote} (score: {new_score}) - {reason[:50]}")
+                    logger.info(f"Round {round_num} - {speaker_name}: {new_vote} (score: {new_score}) - {reason[:50] if reason else 'N/A'}")
                     round_num += 1
                     
                 except Exception as e:
@@ -263,7 +267,7 @@ REASON: <1-2 sentences explaining your current position>"""
                     "vote": {"M": "malicious", "B": "benign", "U": "uncertain"}[vote],
                     "risk_score": current_scores[name],
                     "initial_score": response_map[name].risk_score,
-                    "changed_position": vote != response_map[name].verdict[0].upper()
+                    "changed_position": vote != (response_map[name].verdict[0].upper() if response_map[name].verdict else "U")
                 }
                 for name, vote in current_votes.items()
             },
@@ -315,7 +319,8 @@ REASON: <1-2 sentences explaining your current position>"""
         match = re.search(r'REASON:\s*(.+?)(?:\n|$)', text, re.IGNORECASE | re.DOTALL)
         if match:
             return match.group(1).strip()[:200]  # Limit length
-        # Fallback: return first 150 chars
+        # Fallback: return first 150 chars or empty string
+        return text[:150] if text else "No reason provided"
     
     @staticmethod
     def _extract_final_score(text: str, default: float) -> float:
@@ -603,12 +608,8 @@ class ConsensusBuilder:
         Returns:
             CouncilDecision with complete analysis
         """
-        # Generate recommended actions
-        recommended_actions = self._generate_recommended_actions(
-            consensus.final_verdict,
-            consensus.threat_level,
-            consensus.flag_for_review
-        )
+        # No recommendations/suggestions per user request
+        recommended_actions = []
         
         # Create decision
         decision = CouncilDecision(
@@ -628,64 +629,13 @@ class ConsensusBuilder:
         
         return decision
     
-    def _generate_recommended_actions(self,
-                                     verdict: str,
-                                     threat_level: str,
-                                     flag_for_review: bool) -> List[str]:
-        """
-        Generate recommended actions based on verdict and threat level.
-        
-        Args:
-            verdict: Final verdict
-            threat_level: Threat level
-            flag_for_review: Whether human review is needed
-            
-        Returns:
-            List of recommended actions
-        """
-        actions = []
-        
-        if verdict == "malicious":
-            if threat_level == "critical":
-                actions.extend([
-                    "IMMEDIATE: Unpublish package from registry",
-                    "IMMEDIATE: Alert all users who downloaded this package",
-                    "IMMEDIATE: Notify registry security team via API webhook",
-                    "URGENT: Issue CVE and public security advisory",
-                    "URGENT: Scan all dependent packages for impact"
-                ])
-            elif threat_level == "high":
-                actions.extend([
-                    "URGENT: Flag package for takedown review",
-                    "URGENT: Notify package maintainers and dependent package owners",
-                    "Alert security community via mailing lists",
-                    "Prepare security advisory documentation"
-                ])
-            else:
-                actions.extend([
-                    "Flag package with security warning",
-                    "Queue for detailed manual analysis",
-                    "Monitor for additional suspicious activity"
-                ])
-        
-        elif verdict == "uncertain" or flag_for_review:
-            actions.extend([
-                "Queue for human security analyst review",
-                "Enhanced monitoring for this package",
-                "Cross-reference with threat intelligence databases"
-            ])
-        
-        elif verdict == "benign":
-            if threat_level == "medium":
-                actions.extend([
-                    "Package appears safe but has unusual patterns",
-                    "Add to monitoring watchlist",
-                    "Consider periodic re-analysis"
-                ])
-            else:
-                actions.append("Package cleared for use")
-        
-        return actions
+    # Removed per user request - no suggestions/recommendations
+    # def _generate_recommended_actions(self,
+    #                                  verdict: str,
+    #                                  threat_level: str,
+    #                                  flag_for_review: bool) -> List[str]:
+    #     """Generate recommended actions based on verdict and threat level."""
+    #     return []
 
 
 # Convenience functions

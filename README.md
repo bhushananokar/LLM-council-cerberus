@@ -1,0 +1,449 @@
+# LLM Council - AI-Powered Supply Chain Security
+
+An intelligent multi-agent system for analyzing software packages and detecting supply chain security threats using Large Language Models.
+
+> **Note on LLM Architecture**: Currently using prompt-guided LLMs for demonstration purposes. In production, this system will leverage fine-tuned models specifically trained on security patterns and malicious package detection for improved accuracy and performance.
+
+## Overview
+
+LLM Council employs a collaborative AI approach where multiple specialized agents analyze packages from different security perspectives:
+- **Code Intelligence Agent**: Analyzes source code patterns, suspicious APIs, and obfuscation
+- **Threat Intelligence Agent**: Evaluates threat indicators and malicious patterns
+- **Behavioral Intelligence Agent**: Assesses runtime behavior and system interactions
+
+When agents disagree, an automated debate system conducts multi-round discussions to reach consensus, with results stored in MongoDB for analysis and auditing.
+
+---
+
+## Setup Instructions
+
+### Prerequisites
+
+- Python 3.10+
+- MongoDB (local or Atlas)
+- API keys for LLM providers (Groq, OpenAI, Anthropic, etc.)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd llm-council
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   
+   # Linux/Mac
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables**
+   
+   Create a `.env` file in the project root:
+   ```env
+   # LLM Provider Configuration
+   GROQ_API_KEY=your_groq_api_key
+   OPENAI_API_KEY=your_openai_api_key
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   
+   # LLM Settings
+   LLM_PROVIDER=groq
+   MODEL_NAME=llama-3.3-70b-versatile
+   MAX_TOKENS=2000
+   TEMPERATURE=0.1
+   
+   # MongoDB Configuration
+   MONGODB_URI=mongodb://localhost:27017
+   MONGODB_DATABASE=council_db
+   MONGODB_COLLECTION_ANALYSES=council_analyses
+   MONGODB_COLLECTION_DEBATES=debate_results
+   
+   # Application Settings
+   LOG_LEVEL=INFO
+   LOG_FILE=logs/council.log
+   ENABLE_CACHING=true
+   CACHE_TTL_SECONDS=3600
+   ```
+
+5. **Start MongoDB**
+   ```bash
+   # Local MongoDB
+   mongod
+   
+   # Or use MongoDB Atlas connection string in .env
+   ```
+
+6. **Run the API server**
+   ```bash
+   python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+   Server will be available at `http://localhost:8000`
+
+---
+
+## API Structure
+
+### Base URL
+```
+http://localhost:8000
+```
+
+### Endpoints
+
+#### 1. Analyze Package
+**POST** `/analyze`
+
+Analyzes a software package for security threats using the multi-agent council.
+
+**Request Body:**
+```json
+{
+  "package_name": "suspicious-crypto-lib",
+  "version": "1.0.0",
+  "registry": "npm",
+  "description": "Cryptocurrency utilities",
+  "author": "unknown-author",
+  "downloads_last_month": 150,
+  "package_age_days": 5,
+  "code_segments": [
+    {
+      "file_path": "index.js",
+      "line_start": 10,
+      "line_end": 15,
+      "code": "eval(Buffer.from('base64string', 'base64').toString())",
+      "context": "Main entry point"
+    }
+  ],
+  "static_analysis": {
+    "entropy_score": 85,
+    "obfuscation_score": 90,
+    "dangerous_apis": ["eval", "exec", "child_process"],
+    "suspicious_patterns": ["base64_decode", "environment_access"]
+  },
+  "behavioral_analysis": {
+    "network_connections": ["malicious-domain.com:443"],
+    "file_operations": ["/etc/passwd read", "~/.ssh/ write"],
+    "environment_access": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+    "syscalls": ["execve", "socket", "connect"]
+  },
+  "dependency_analysis": {
+    "total_dependencies": 25,
+    "suspicious_dependencies": ["crypto-stealer", "backdoor-lib"],
+    "typosquat_score": 75
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "decision_id": "dec_1234567890",
+  "package_name": "suspicious-crypto-lib",
+  "package_version": "1.0.0",
+  "verdict": "malicious",
+  "final_risk_score": 96.0,
+  "final_confidence": 92.0,
+  "threat_level": "critical",
+  "requires_human_review": false,
+  "consensus_result": {
+    "final_risk_score": 96.0,
+    "final_confidence": 92.0,
+    "final_verdict": "malicious",
+    "threat_level": "critical",
+    "agreement_level": "strong",
+    "variance": 4.0,
+    "agent_scores": {
+      "code_intelligence": 96,
+      "threat_intelligence": 98,
+      "behavioral_intelligence": 94
+    },
+    "agent_verdicts": {
+      "code_intelligence": "malicious",
+      "threat_intelligence": "malicious",
+      "behavioral_intelligence": "malicious"
+    },
+    "debate_conducted": false,
+    "flag_for_review": false,
+    "explanation": "Strong consensus detected. Code contains credential theft with network exfiltration.",
+    "total_tokens_used": 2200
+  },
+  "agent_responses": [
+    {
+      "agent_name": "code_intelligence",
+      "model_name": "llama-3.3-70b-versatile",
+      "risk_score": 96,
+      "confidence": 92,
+      "verdict": "malicious",
+      "explanation": "Code uses eval() with base64 decoding to execute hidden payload...",
+      "tokens_used": 750
+    }
+  ],
+  "recommended_actions": [],
+  "total_tokens_used": 2200,
+  "estimated_cost_usd": 0.0101,
+  "analysis_duration_seconds": 4.2
+}
+```
+
+**Status Codes:**
+- `200` - Analysis completed successfully
+- `400` - Invalid request body
+- `500` - Internal server error
+
+---
+
+#### 2. Health Check
+**GET** `/health`
+
+Check system health and agent availability.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "agents_available": 3,
+  "llm_provider": "groq",
+  "model_name": "llama-3.3-70b-versatile",
+  "cache_enabled": true,
+  "mongodb_connected": true,
+  "timestamp": "2026-02-01T20:30:00Z"
+}
+```
+
+---
+
+#### 3. System Statistics
+**GET** `/stats`
+
+Get system usage statistics.
+
+**Response:**
+```json
+{
+  "total_analyses": 1247,
+  "cache_hit_rate": 0.34,
+  "average_tokens_per_analysis": 2150,
+  "mongodb_documents": 1247
+}
+```
+
+---
+
+#### 4. System Configuration
+**GET** `/config`
+
+Get current system configuration (non-sensitive).
+
+**Response:**
+```json
+{
+  "llm_provider": "groq",
+  "model_name": "llama-3.3-70b-versatile",
+  "max_tokens": 2000,
+  "temperature": 0.1,
+  "cache_enabled": true,
+  "log_level": "INFO"
+}
+```
+
+---
+
+### MongoDB Query Endpoints
+
+#### 5. Get All Analyses
+**GET** `/api/v1/council/analyses`
+
+Query stored analysis results.
+
+**Query Parameters:**
+- `skip` (int): Number of records to skip (pagination)
+- `limit` (int): Maximum records to return (default: 100)
+
+**Response:**
+```json
+{
+  "analyses": [
+    {
+      "decision_id": "dec_1234567890",
+      "package_name": "suspicious-crypto-lib",
+      "verdict": "malicious",
+      "risk_score": 96.0,
+      "threat_level": "critical",
+      "timestamp": "2026-02-01T20:30:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+#### 6. Get Analysis Statistics
+**GET** `/api/v1/council/analyses/stats`
+
+Get aggregated statistics from stored analyses.
+
+**Response:**
+```json
+{
+  "total_analyses": 1247,
+  "verdicts": {
+    "malicious": 342,
+    "benign": 856,
+    "uncertain": 49
+  },
+  "avg_risk_score": 34.5,
+  "threat_levels": {
+    "critical": 89,
+    "high": 253,
+    "medium": 421,
+    "low": 484
+  }
+}
+```
+
+---
+
+#### 7. Get Debate Results
+**GET** `/api/v1/council/debates`
+
+Query stored debate results.
+
+**Query Parameters:**
+- `skip` (int): Pagination offset
+- `limit` (int): Maximum records
+
+**Response:**
+```json
+{
+  "debates": [
+    {
+      "debate_id": "debate_1234567890",
+      "package_name": "controversial-lib",
+      "rounds": 9,
+      "winner": "malicious",
+      "timestamp": "2026-02-01T20:45:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+## Architecture
+
+### Multi-Agent System
+```
+Package Input → Agent 1 (Code Intelligence)
+             → Agent 2 (Threat Intelligence)  → Consensus Builder → Final Decision
+             → Agent 3 (Behavioral Intelligence)
+```
+
+### Debate System
+When agents disagree (variance > threshold):
+1. Automated multi-round debate initiated
+2. Agents present evidence and counter-arguments
+3. Positions tracked and analyzed
+4. Consensus reached through structured discussion
+5. Results stored in MongoDB for audit trail
+
+### Data Persistence
+- **MongoDB**: Stores all analysis results and debate transcripts
+- **Caching**: Redis-style in-memory cache for repeated queries
+- **Logging**: Comprehensive logging to file and console
+
+---
+
+## Project Structure
+
+```
+llm-council/
+├── api/
+│   └── main.py              # FastAPI application
+├── config/
+│   ├── settings.py          # Configuration management
+│   └── prompts/             # Agent system prompts
+├── src/
+│   ├── agents.py            # Agent implementations
+│   ├── consensus.py         # Consensus & debate logic
+│   ├── models.py            # Pydantic data models
+│   ├── orchestrator.py      # Main orchestration
+│   ├── llm_clients.py       # LLM provider clients
+│   └── utils.py             # Utility functions
+├── mongo_crud/
+│   └── app/
+│       ├── database/        # MongoDB operations
+│       ├── models/          # Database models
+│       ├── schemas/         # API schemas
+│       └── routers/         # API endpoints
+├── tests/
+│   └── test_*.py            # Test files
+├── .env                     # Environment variables
+├── requirements.txt         # Dependencies
+└── README.md               # This file
+```
+
+---
+
+## Testing
+
+### Run Test Analysis
+```bash
+# Test with malicious package
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d @test_malicious_package.json
+
+# Test with benign package
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d @test_benign_package.json
+```
+
+### Query Results
+```bash
+# Get all analyses
+curl http://localhost:8000/api/v1/council/analyses
+
+# Get statistics
+curl http://localhost:8000/api/v1/council/analyses/stats
+
+# Get debates
+curl http://localhost:8000/api/v1/council/debates
+```
+
+---
+
+## Future Enhancements
+
+- **Fine-tuned LLMs**: Deploy custom models trained on security datasets
+- **Real-time Package Scanning**: Integration with npm/PyPI registries
+- **Advanced Threat Intelligence**: Connect to CVE databases and threat feeds
+- **Human-in-the-Loop**: Interface for security analysts to review flagged packages
+- **Automated Response**: API webhooks for immediate registry notifications
+
+---
+
+## License
+
+[Your License Here]
+
+## Contributing
+
+[Contribution Guidelines]
+
+## Contact
+
+[Contact Information]

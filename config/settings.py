@@ -24,7 +24,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
-        env_parse_none_str="None"
+        env_parse_none_str="None",
+        extra="ignore"  # Ignore MongoDB and other extra variables
     )
     
     # ============================================================================
@@ -55,11 +56,32 @@ class Settings(BaseSettings):
     AGENT3_MODEL: str = "gemini-2.0-flash-exp"
     AGENT3_WEIGHT: float = 0.35
     
+    # Overseer Agent
+    OVERSEER_MODEL: str = "gemini-2.0-flash-thinking-exp"
+    OVERSEER_ENABLED: bool = True
+    
+    # ============================================================================
+    # DEBATE SYSTEM PARAMETERS
+    # ============================================================================
+    # Debate configuration
+    MAX_DEBATE_ROUNDS: int = 5
+    CONSENSUS_THRESHOLD: float = 0.67  # 67% agreement needed
+    ENABLE_REFLECTIONS: bool = True
+    ENABLE_OVERSEER_INTERVENTION: bool = True
+    
+    # Intervention thresholds
+    REASONING_QUALITY_THRESHOLD: float = 50.0  # Below this triggers intervention
+    
     # ============================================================================
     # LLM GENERATION PARAMETERS
     # ============================================================================
     MAX_OUTPUT_TOKENS: int = 1000
     TEMPERATURE: float = 0.1
+    
+    # Enhanced tokens for debate phases
+    MAX_TOKENS_PRESENTATION: int = 1500
+    MAX_TOKENS_REFLECTION: int = 1000
+    MAX_TOKENS_VOTE: int = 800
     
     # ============================================================================
     # CONSENSUS PARAMETERS

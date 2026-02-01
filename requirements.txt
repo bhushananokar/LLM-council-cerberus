@@ -1,47 +1,50 @@
 # Core Framework
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-pydantic==2.10.3
-pydantic-settings==2.6.1
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.0.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
 
 # LLM Clients
-groq==0.13.0
-google-generativeai==0.8.3
+groq
+google-generativeai
 
 # Async Support
-asyncio==3.4.3
-aiofiles==24.1.0
+asyncio
+aiofiles
 
 # Cache
-redis==5.2.0
+redis
+
+# MongoDB (Optional - for storing council outputs)
+# Note: motor includes pymongo as a dependency, so we only need motor
+motor>=3.3.0
 
 # Environment Variables
-python-dotenv==1.0.1
+python-dotenv
 
 # HTTP Clients
-httpx==0.28.1
-requests==2.32.3
+httpx
+requests
 
 # Data Validation & Serialization
-pydantic[email]==2.10.3
+pydantic[email]
 
 # Utilities
-python-multipart==0.0.19
+python-multipart
 
 # Testing (Optional)
-pytest==8.3.4
-pytest-asyncio==0.24.0
-pytest-cov==6.0.0
-httpx==0.28.1
+pytest
+pytest-asyncio
+pytest-cov
 
 # Development Tools (Optional)
-black==24.10.0
-flake8==7.1.1
-mypy==1.13.0
-isort==5.13.2
+black
+flake8
+mypy
+isort
 
 # Logging & Monitoring
-colorlog==6.9.0
+colorlog
 
 # Production Server (Optional)
-gunicorn==23.0.0
+gunicorn
