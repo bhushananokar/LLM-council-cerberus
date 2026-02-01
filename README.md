@@ -1,7 +1,7 @@
 # LLM Council - AI-Powered  Security
 
 An intelligent multi-agent system for analyzing software packages and detecting Open Source code  security threats using Large Language Models.
-*Frontend Repo*: https://github.com/bhushananokar/cerberus-frontend
+#*Frontend Repo*: https://github.com/bhushananokar/cerberus-frontend
 ## 🎯 Project Context
 
 **LLM Council is part of a comprehensive Open Source code  security platform.** This component focuses on the AI-powered decision-making layer that receives pre-processed package intelligence from upstream static analysis tools.
