@@ -1,10 +1,10 @@
-# LLM Council - AI-Powered Supply Chain Security
+# LLM Council - AI-Powered  Security
 
-An intelligent multi-agent system for analyzing software packages and detecting supply chain security threats using Large Language Models.
+An intelligent multi-agent system for analyzing software packages and detecting Open Source code  security threats using Large Language Models.
 
 ## 🎯 Project Context
 
-**LLM Council is part of a comprehensive supply chain security platform.** This component focuses on the AI-powered decision-making layer that receives pre-processed package intelligence from upstream static analysis tools.
+**LLM Council is part of a comprehensive Open Source code  security platform.** This component focuses on the AI-powered decision-making layer that receives pre-processed package intelligence from upstream static analysis tools.
 
 ### Complete Pipeline Architecture
 
@@ -24,7 +24,7 @@ Package Analysis → Static Checks → JSON Input → LLM Council → Risk Asses
 
 **This system processes that pre-analyzed data through multiple AI agents to make final security decisions.**
 
-> **⚡ Future Enhancement**: The LLMs will be fine-tuned on security-specific datasets including known malicious packages, vulnerability patterns, and supply chain attack signatures. This fine-tuning will significantly improve detection accuracy, reduce false positives, and enable the system to recognize novel attack patterns.
+> **⚡ Future Enhancement**: The LLMs will be fine-tuned on security-specific datasets including known malicious packages, vulnerability patterns, and Open Source code  attack signatures. This fine-tuning will significantly improve detection accuracy, reduce false positives, and enable the system to recognize novel attack patterns.
 
 ## Overview
 
